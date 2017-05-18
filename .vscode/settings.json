@@ -1,0 +1,5 @@
+{ "key": "shift+cmd+r",  "command": "workbench.action.tasks.runTask" },
+{ "key": "shift+cmd+e",  "command": "workbench.action.tasks.terminate"},
+{
+    "typescript.check.workspaceVersion": false
+}

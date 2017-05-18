@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="author" content="Martyn Smith - USGS NY WSC">
+	<link rel="copyright" href="license.txt">
+    <title>DEC StreamBio Mapper - Under Development (see disclaimer for more information)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+      
+        <link rel="stylesheet" type="text/css" href="./deps/bootstrap-3.3.7-dist/css/bootstrap.css"/>
+        <link rel="stylesheet" type="text/css" href="./deps/DataTables-1.10.15/css/dataTables.bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="./deps/Buttons-1.3.1/css/buttons.bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="./deps/Editor-1.6.2/css/editor.bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="./deps/Responsive-2.1.1/css/responsive.bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="./deps/Select-1.2.2/css/select.bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="./deps/leaflet/leaflet.css"/>
+        <link rel="stylesheet" type="text/css" href="./styles/main.css"/>
+        
+        
+        <script type="text/javascript" src="./deps/jQuery-1.12.4/jquery-1.12.4.min.js"></script>
+        <script type="text/javascript" src="./deps/bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+        <script type="text/javascript" src="./deps/JSZip-3.1.3/jszip.min.js"></script>
+        <script type="text/javascript" src="./deps/pdfmake-0.1.27/build/pdfmake.min.js"></script>
+        <script type="text/javascript" src="./deps/pdfmake-0.1.27/build/vfs_fonts.js"></script>
+        <script type="text/javascript" src="./deps/DataTables-1.10.15/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="./deps/DataTables-1.10.15/js/dataTables.bootstrap.min.js"></script>
+        <script type="text/javascript" src="./deps/Buttons-1.3.1/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" src="./deps/Buttons-1.3.1/js/buttons.bootstrap.min.js"></script>
+        <script type="text/javascript" src="./deps/Buttons-1.3.1/js/buttons.colVis.min.js"></script>
+        <script type="text/javascript" src="./deps/Buttons-1.3.1/js/buttons.html5.min.js"></script>
+        <script type="text/javascript" src="./deps/Editor-1.6.2/js/dataTables.editor.min.js"></script>
+        <script type="text/javascript" src="./deps/Editor-1.6.2/js/editor.bootstrap.min.js"></script>
+        <script type="text/javascript" src="./deps/Responsive-2.1.1/js/dataTables.responsive.min.js"></script>
+        <script type="text/javascript" src="./deps/Responsive-2.1.1/js/responsive.bootstrap.min.js"></script>
+        <script type="text/javascript" src="./deps/Select-1.2.2/js/dataTables.select.min.js"></script>
+        <script type="text/javascript" src="./deps/leaflet/leaflet.js"></script>
+        <script type="text/javascript" src="./deps/esri-leaflet-1.0.0/esri-leaflet.js"></script>
+        <script type="text/javascript" src="./deps/jquery-csv-0.8.3/src/jquery.csv.js"></script>
+        <script type="text/javascript" src="./deps/moment-2.18.1/moment.js"></script>
+
+        <script src="./scripts/app.js"></script>
+
+  </head>
+  <body>
+    <div id="top-menu">
+        <div class="title">
+            <a class='top-menu-brand' href="http://www.usgs.gov"><img src="images/usgs-logo.png"></a>
+            <span class="app-name">DEC StreamBio Mapper - Under Development (see disclaimer for more information)</span> <span class="app-name-mobile">DEC StreamBio Mapper</span> 
+        </div>
+        <div id="mobile-main-menu">
+            <span class="glyphicon glyphicon-menu-hamburger" ></span>
+        </div>
+
+        <button id="aboutButton" class="btn btn-default top-menu-btn pull-right">
+            <i class="glyphicon glyphicon-info-sign"></i><span class="hidden-xs">&nbsp;&nbsp;About</span>
+        </button>
+    </div>
+
+    <div id="main-menu">
+        <div class="main-menu-container scrollable">
+            <div class="menu-content"> 
+                <div class="scrollable-content">
+
+                    <div class="panel-group" id="accordion">
+
+                        <div class="panel panel-default sidebar-panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#tablesPanel">
+                                        Table Editor
+                                    </a>
+                                </h4>
+                            </div>
+                            <div id="tablesPanel" class="panel-collapse collapse in">
+                                <div class="panel-body collapse in">     
+     
+                                    <div id="tableList"></div>
+       								
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel panel-default sidebar-panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#mapPanel">
+                                        Map View
+                                    </a>
+                                </h4>
+                            </div>
+                            <div id="mapPanel" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <h5>Map Layers</h5>
+                                    <div id="baseLayerToggles" style="padding: 2px 2px;"></div>
+
+                                    <h5>Basemap Layers</h5>
+                                    <button id="btnStreets" class="btn btn-default slick-btn basemapBtn equalize"><img class="basemapThumb" alt="" src="images/streets.jpg"><br class="basemapThumb">Streets</button>
+                                    <button id="btnImagery" class="btn btn-default slick-btn basemapBtn equalize" ><img class="basemapThumb" alt="" src="images/satellite.jpg"><br class="basemapThumb">Imagery</button>
+                                    <button id="btnTopographic" class="btn btn-default slick-btn basemapBtn equalize"><img class="basemapThumb" alt="" src="images/topo.jpg"><br class="basemapThumb">Topographic</button>
+                                    <button id="btnTerrain" class="btn btn-default slick-btn basemapBtn equalize"><img class="basemapThumb" alt="" src="images/terrain.jpg"><br class="basemapThumb">Terrain</button>
+                                    <button id="btnDarkGray" class="btn btn-default slick-btn basemapBtn equalize slick-btn-selection" ><img class="basemapThumb" alt="" src="images/dark-gray.jpg"><br class="basemapThumb">Dark Gray</button>
+                                    <button id="btnGray" class="btn btn-default slick-btn basemapBtn equalize" ><img class="basemapThumb" alt="" src="images/gray.jpg"><br class="basemapThumb">Gray</button>
+                                    <button id="btnNationalGeographic" class="btn btn-default slick-btn basemapBtn equalize"><img class="basemapThumb" alt="" src="images/natgeo.jpg"><br class="basemapThumb">National Geographic</button>    	
+
+                                    <h5>Export</h5>
+                                    <div id="export" style="display:block;">
+                                        <div class="form-group">
+                                            <button type="button" class="btn btn-success btn-block" id="exportGeoJSON" >Export GeoJSON&nbsp;&nbsp;<i class="glyphicon glyphicon-download-alt"></i></button>
+                                        </div>
+                                       <div class="form-group">
+                                            <button type="button" class="btn btn-success btn-block" id="exportKML" >Export KML&nbsp;&nbsp;<i class="glyphicon glyphicon-download-alt"></i></button>
+                                        </div>
+                                        <div class="form-group">
+                                            <button type="button" class="btn btn-success btn-block" id="exportCSV" >Export CSV&nbsp;&nbsp;<i class="glyphicon glyphicon-download-alt"></i></button>
+                                        </div>
+                                    </div>							
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div id="info" class="identification pull-right">Developed by USGS NY WSC</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <div id="aboutModal" class="modal fade"  tabindex="-1" role="dialog" >
+        <div class="modal-dialog  modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="close" type="button" data-dismiss="modal" aria-hidden="true" style="color:gray;">&times;</button>
+                    <h4 class="modal-title">NY WSC 305b Mapper</h4>
+                </div>
+                <div id="aboutModalBody" class="modal-body">
+                    <ul class="nav nav-tabs" id="aboutModalTabs">
+                        <li role="presentation" class="active"><a id="aboutTab" href="#aboutTabPane" data-toggle="tab"><i class="fa fa-question-circle"></i>&nbsp;About the application</a></li>
+                        <li role="presentation"><a id="disclaimerTab" href="#disclaimerTabPane" data-toggle="tab"><i class="fa fa-exclamation-circle"></i>&nbsp;Disclaimer</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="aboutTabPane"></br>
+                            <p>Developed by Martyn Smith of the NY WSC.  Licensed under <a href="./license.txt" target="_blank">Apache 2.0</a></p>
+                            <p>Portions of this application were developed in conjuction with <a href="http://wim.usgs.gov" target="_blank">Web Informatics and Mapping (WiM)</a></p>
+                            <span id="appVersion"></span>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="disclaimerTabPane"></br>
+                            <p>This mapping product is under development and should only be used in consultation with New York Water Science Center staff.  Please contact Tia Scott (tia-mariescott@usgs.gov) for more information.</p>
+                        </div>
+                    </div>
+                </div>
+                <!--<div class="modal-footer">
+                </div>-->
+            </div><!-- /.modal-content -->
+        </div> <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+    <div id="dataTables">
+    </div>
+    <div id="mapDiv" style="display:none;"></div>
+
+  </body>
+</html>
