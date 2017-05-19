@@ -36,7 +36,12 @@ Editor::inst( $db, 'master_macro_sample', array('basin', 'location', 'rivmile') 
             ->setFormatter( 'Format::datetime', array(
                 'from' => 'm-d-Y g:i A',
                 'to' =>   'Y-m-d H:i:s'
-            ) )
+            ) ),
+		Field::inst( 'collect' ),
+		Field::inst( 'replicate' ),
+		Field::inst( 'macro_genspecies' ),
+		Field::inst( 'indiv' )		
 	)
+	// ->where('master_macro_sample.location','SCHO')
 	->process( $_POST )
 	->json();

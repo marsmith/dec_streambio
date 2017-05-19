@@ -391,7 +391,54 @@ var tableData = [{
 			format:    'MM-DD-YYYY h:mm A',
 			fieldInfo: 'US style m-d-y date input with 12 hour clock'
 		}
-	]}
+	]},{	
+	type: 'query',
+	ajax: {
+		url: 'php/query.master_macro_sample.php',
+		dataSrc : function ( json ) {
+			var data = [];
+			//console.log('json',json)
+			$.each(json.data, function( index, record) {
+				//console.log(record)
+				if (record.indiv === "2") {
+					data.push(record);
+				}
+
+			});
+			//console.log('data',data);
+			return data;
+		},
+	},
+	table: '#query_master_macro_sample',
+	columns: [
+		{
+			data: "basin"
+		},
+		{
+			data: "location"
+		},
+		{
+			data: "rivmile"
+		},
+		{
+			data: "coll_date",
+		},
+		{
+			data: "collect",
+		},
+		{
+			data: "replicate",
+		},
+		{
+			data: "macro_genspecies",
+		},
+		{
+			data: "indiv",
+		}	
+	],
+	searching: false, 
+	paging: false,
+	}
 ];
 
 
@@ -455,7 +502,7 @@ $( document ).ready(function() {
 	});
 
 				
-	$('#tableList').on("click", '.tableSelect', function(e) {
+	$('#main-menu').on("click", '.tableSelect', function(e) {
 		var buttonID = $(this).attr('id').replace('show_','');
 
 		//on click hide all other tables and show the one clicked
@@ -537,23 +584,59 @@ function initializeTables() {
 		var tableName = table.table.replace('#','');
 		var tableTitle = toTitleCase(tableName.replace('master_','').replace('_',' '));
 
-		//add button to sidebar
-		$('#tableList').append('<button type="button" class="btn btn-success btn-block tableSelect" id="show_' + tableName + '" >' + tableTitle + '</button>');
-			
 		//add table structure to dom
-		$('#dataTables').append('<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered " id="' + tableName + '" ><thead></thead></table>');
+		$('#dataTables').append('<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered " id="' + tableName + '" ><thead></thead></table>');	
 
-		//add table header for each field
-		var headerRow = '<tr>';
-		$.each(table.fields, function( index, field ) {
-			headerRow += '<th>' + field.label.replace(':','') + '</th>';
-		});
-		headerRow += '</tr>';
-		$(table.table + ' thead').append(headerRow);
+		//check table type
+		if (table.type == 'query') {
+			//add button to sidebar
+			$('#queryList').append('<button type="button" class="btn btn-success btn-block tableSelect" id="show_' + tableName + '" >' + tableTitle + '</button>');
 
-		//create datatables
-		createTable(table);
+			var headerRow = '<tr>';
+			$.each(table.columns, function( index, field ) {
+				headerRow += '<th>' + field.data + '</th>';
+			});
+			headerRow += '</tr>';
+			$(table.table + ' thead').append(headerRow);
+
+			createQuery(table);
+		}
+		else {
+			//add button to sidebar
+			$('#tableList').append('<button type="button" class="btn btn-success btn-block tableSelect" id="show_' + tableName + '" >' + tableTitle + '</button>');
+
+			//add table header for each field
+			var headerRow = '<tr>';
+			$.each(table.fields, function( index, field ) {
+				headerRow += '<th>' + field.label.replace(':','') + '</th>';
+			});
+			headerRow += '</tr>';
+			$(table.table + ' thead').append(headerRow);
+
+			//create datatables
+			createTable(table);	
+		}
 	});
+}
+
+function createQuery(tableInfo) {
+
+	//initialized datatables
+	var table = $(tableInfo.table).DataTable(tableInfo);
+	
+	//setup buttons
+	new $.fn.dataTable.Buttons( table, {
+		buttons: [{
+			extend: 'csv',
+			text: 'Export BAP to CSV'
+		}]
+	} );
+
+	table.buttons().container()
+		.appendTo( $('.col-sm-6:eq(0)', table.table().container() ) );
+
+	//hide all other tables
+	if (!tableInfo.show) $(tableInfo.table + '_wrapper').hide();
 }
 
 function createTable(tableInfo) {
