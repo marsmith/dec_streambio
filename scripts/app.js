@@ -715,7 +715,7 @@ function createTable(tableInfo) {
 				//get CSV keys
 				var CSVkeys = Object.keys(data[0]);
 
-				//first make sure keys match whats in the table
+				//some simple validation--first make sure keys match whats in the table
 				if(tableKeys.sort().join(',') !== CSVkeys.sort().join(',')){
 					alert('CSV contains needs to contain a header row with the following fields: ' + tableKeys.join(','));
 					return;
@@ -821,8 +821,8 @@ function loadSites() {
 					createPopup(e.latlng,e.layer.feature.properties);
 
 					//also select row from table
-					table.rows().deselect();
-					table.row('#' + e.layer.feature.properties.DT_RowId).select();
+					// table.rows().deselect();
+					// table.row('#' + e.layer.feature.properties.DT_RowId).select();
 
 				});
 
