@@ -15,11 +15,10 @@
 var MapX = '-76.2';
 var MapY = '42.7';
 var map;
-// var table, editor;
+var mapServer;
 var masterGeoJSON,curGeoJSONlayer;
 var sitesLayer;  //leaflet feature group representing current filtered set of sites
 var layer, layerLabels;
-var visibleLayers = [];
 var identifiedFeature;
 var filterSelections = [];
 var popupItems = ['SNAME','STAID','MAJRIVBAS','WELLUSE','WELLCOMPIN','CNTY','GUNIT','HUNIT'];
@@ -36,22 +35,20 @@ var GeoFilterGroupList = [
 ];
 
 var layerList = [
-	{layerID: "0", layerName: "NY WSC Sub-district", outFields: ["subdist","FID"],dropDownID: "WSCsubDist"},
-	{layerID: "1", layerName: "Senate District", outFields: ["NAMELSAD","FID","Rep_Name"],dropDownID: "SenateDist"},
-	{layerID: "2", layerName: "Assembly District", outFields: ["NAMELSAD","FID","AD_Name"], dropDownID: "AssemDist"},
-	{layerID: "3", layerName: "Congressional District",	outFields: ["NAMELSAD","FID","CD_Name"], dropDownID: "CongDist"},
-	{layerID: "4", layerName: "County",	outFields: ["County_Nam","FID"],dropDownID: "County"},
-	{layerID: "5", layerName: "Hydrologic Unit",	outFields: ["HUC_8","FID","HU_8_Name"],	dropDownID: "HUC8"},
-	{layerID: "6", layerName: "Surficial Geology",	outFields: ["FID","MATERIAL"], dropDownID: "SurfGeol"},
-	{layerID: "7", layerName: "Bedrock Geology",	outFields: ["FID","MATERIAL"],dropDownID: "BedrockGeol"},
-	{layerID: "8", layerName: "NLCD 2011 Land Cover",	outFields: [],	dropDownID: "NLCD11"}	
+	{layerID: "0", layerName: "Water Quality Class Line", outFields: ["FID","classifica"],dropDownID: "waterQualityClassLine"},
+	{layerID: "1", layerName: "WIPWL Layer", outFields: ["FID","name"],dropDownID: "WIPWLlayer"},
+	{layerID: "2", layerName: "HUC 8", outFields: ["FID","HUC_8"], dropDownID: "huc8"},
+	{layerID: "3", layerName: "HUC 4", outFields: ["FID","HUC4"], dropDownID: "huc4"},
+	{layerID: "4", layerName: "DEC Regions",	outFields: ["FID","REGION"],dropDownID: "DECregions"},
+	{layerID: "5", layerName: "City and Town Boundaries",	outFields: ["FID","Name"],	dropDownID: "cityAndTownBoundaries"},
+	{layerID: "6", layerName: "Counties",	outFields: ["FID","CNTYNAME"], dropDownID: "counties"},
 ];
 
 var mapServerDetails =  {
-	"url": "https://www.sciencebase.gov/arcgis/rest/services/Catalog/58f63226e4b0f2e20545e5e1/MapServer",
-	"layers": [0,1,2,3,4,5,6,7,8], 
+	"url": "https://www.sciencebase.gov/arcgis/rest/services/Catalog/5925c400e4b0b7ff9fb3cabe/MapServer",
+	"layers": [], 
 	"visible": false, 
-	"opacity": 0.8,
+	"opacity": 0.5,
 };
 
 var tableData = [{
@@ -463,8 +460,14 @@ $( document ).ready(function() {
 	//define layers
 	sitesLayer = L.featureGroup().addTo(map);
 
+	//load some sites on the map
 	loadSites();
+
+	//initialize datatables
 	initializeTables();
+
+	//add map layers
+	parseBaseLayers();
 	
 	/*  START EVENT HANDLERS */
 	$('#mobile-main-menu').click(function() {
@@ -501,7 +504,12 @@ $( document ).ready(function() {
 		toggleBaseLayer(e,button);
 	});
 
-				
+	//set up click listener for map querying
+	map.on('click', function (e) {
+		queryMapLayers(e)
+	});	
+
+	//main table toggle	
 	$('#main-menu').on("click", '.tableSelect', function(e) {
 		var buttonID = $(this).attr('id').replace('show_','');
 
@@ -535,44 +543,85 @@ $( document ).ready(function() {
 	/*  END EVENT HANDLERS */
 });
 
-function toggleBaseLayer(e, button) {
+function queryMapLayers(e) {
+	var visibleLayers = mapServer.getLayers();
+
+	if (visibleLayers.length > 0) {
+		mapServer.identify().on(map).at(e.latlng).layers("visible:" + visibleLayers[0]).run(function(error, featureCollection){
+			if (featureCollection.features.length > 0) {
+			$.each(featureCollection.features, function (index,value) {
+
+				if (map.hasLayer(identifiedFeature)) map.removeLayer(identifiedFeature);
+				identifiedFeature = L.geoJson(value).addTo(map);
+				
+				$.each(layerList, function (index, layerInfo) {
+					var popupContent = '<h5>' + layerInfo.layerName + '</h5>';
+					
+					if (visibleLayers[0] == layerInfo.layerID) {
+						$.each(value.properties, function (key, field) {
+							if (layerInfo.outFields.indexOf(key) != -1) {								
+								if (key != "FID") popupContent += '<strong>' + field + '</strong></br>';
+							}
+						});
+						
+						popup = L.popup()
+						.setLatLng(e.latlng)
+						.setContent(popupContent)
+						.openOn(map);
+					}
+				});
+			});
+			}
+			else {
+			//pane.innerHTML = 'No features identified.';
+			}
+		});
+	}
+}
+
+function parseBaseLayers() {
+	mapServer = L.esri.dynamicMapLayer(mapServerDetails);
+	addMapLayerToLegend(mapServerDetails);
+}
+
+function addMapLayerToLegend(mapServerDetails) {
 	
+	$.getJSON(mapServerDetails.url + '/legend?f=json', function (legendResponse) {
+			$.each(legendResponse.layers, function (index,legendValue) {
+					
+				$.each(layerList, function (index,layerValue) {
+					
+				if (legendValue.layerId == layerValue.layerID) {
+
+					$('#baseLayerToggles').append('<button id="' + camelize(layerValue.layerName) + '" class="btn btn-default slick-btn mapLayerBtn equalize layerToggle" value="' + layerValue.layerID + '"><img alt="Legend Swatch" src="data:image/png;base64,' + legendValue.legend[0].imageData + '" />' + layerValue.layerName + '</button>');
+				}
+			})
+		});
+	});
+}
+
+function toggleBaseLayer(e, button) {
+
+	//remove any layers and unselect all buttons
+	$('.mapLayerBtn').removeClass('slick-btn-selection');
+	map.closePopup();
+	if (map.hasLayer(identifiedFeature)) map.removeLayer(identifiedFeature);
+
+	//get the layerID of the new layer	
 	var layerID = parseInt($(button).attr('value'));		
 	
-	//layer toggle
-	var visibleLayers = mapServer.getLayers();
-	var index = -1;
-
-	//there is something on the map already
-	if (visibleLayers) index = visibleLayers.indexOf(layerID);
-
 	//case 1, remove this layer from the map
-	if (index > -1) {
-		//console.log('map already has this layer: ', layerID);
-		visibleLayers.splice(index, 1);
-
-		//if there is nothing in visibleLayers, have to remove the map layer to clear
-		if (visibleLayers.length === 0) {
-			map.removeLayer(mapServer);
-		}
-
-		//otherwise just set to the current list
-		else {
-			mapServer.setLayers(visibleLayers);
-		}
-		
-		//console.log('current visible layers: ', visibleLayers);	
+	if (mapServer.getLayers().indexOf(layerID) > -1) {
 		$(button).removeClass('slick-btn-selection');
+		mapServer.setLayers([]);
+		map.removeLayer(mapServer);	
 	} 
 	
 	//case 2, add this layer to existing layers
 	else {
-		//console.log('map DOES NOT have this layer: ', layerID);
 		$(button).addClass('slick-btn-selection');
-		visibleLayers.push(layerID);
-		mapServer.setLayers(visibleLayers);
-		//map.addLayer(mapServer);
-		//console.log('current visible layers: ', visibleLayers);
+		mapServer.setLayers([layerID]);
+		map.addLayer(mapServer);
 	}
 }
 
